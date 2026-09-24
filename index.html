@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.ico" />
+    <title>SYSTEM LOCKED</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        void: '#0A0507',
+                        blood: '#7F1420',
+                        alert: '#FF3B3B',
+                        ash: '#E8DCDC',
+                        navy: '#162F4C',
+                        'navy-deep': '#0D1E33',
+                        coral: '#E27668',
+                        signal: '#4ED2A0',
+                        paper: '#F7F5F2',
+                        mist: '#8FA3BC'
+                    },
+                    fontFamily: {
+                        display: ['"Secular One"', 'system-ui', 'sans-serif'],
+                        body: ['Assistant', 'system-ui', 'sans-serif'],
+                        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        html { scroll-behavior: smooth; }
+        body { background-color: #0A0507; }
+
+        /* phase 1 texture - killed once the reveal is on screen */
+        #scanlines {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 30;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(255, 59, 59, .035) 0px,
+                rgba(255, 59, 59, .035) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+            transition: opacity 700ms ease;
+        }
+
+        html.revealed #scanlines { opacity: 0; }
+
+        .pulse-bg {
+            background: radial-gradient(ellipse 70% 55% at 50% 0%, rgba(127, 20, 32, .55), transparent 70%);
+            animation: breathe 4s ease-in-out infinite;
+        }
+
+        @keyframes breathe { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+
+        .glow { animation: glowPulse 2.2s ease-out infinite; }
+        @keyframes glowPulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 59, 59, .55); }
+            70% { box-shadow: 0 0 0 22px rgba(255, 59, 59, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 59, 59, 0); }
+        }
+
+        .tick { animation: tick 1s steps(1) infinite; }
+        @keyframes tick { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .25; } }
+
+        .chev { animation: chev 1.8s ease-in-out infinite; }
+        @keyframes chev {
+            0%, 100% { transform: translateY(0); opacity: .45; }
+            50% { transform: translateY(7px); opacity: 1; }
+        }
+
+        /* the reveal fades up as it enters the viewport. the hidden start state is
+           scoped to .js so that a failed observer can never leave a blank page */
+        html.js #phase2 > * { opacity: 0; transform: translateY(22px); transition: opacity 700ms ease, transform 700ms ease; }
+        html.js.revealed #phase2 > * { opacity: 1; transform: translateY(0); }
+
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, ::before, ::after {
+                animation-duration: .001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .001ms !important;
+            }
+        }
+
+        :focus-visible { outline: 3px solid #E27668; outline-offset: 3px; }
+    </style>
+</head>
+
+<body class="font-body text-ash antialiased overflow-x-hidden">
+
+    <div id="scanlines" aria-hidden="true"></div>
+
+    <!-- ============ PHASE 1 : the ransom note. english, because attackers write in english ============ -->
+    <section id="phase1" dir="ltr" class="relative min-h-screen bg-void flex items-center justify-center px-5 py-16 text-center">
+        <div class="pulse-bg absolute inset-0 pointer-events-none"></div>
+
+        <div class="relative z-10 w-full max-w-3xl">
+
+            <div class="inline-flex items-center gap-2 border border-alert/40 bg-alert/10 text-alert px-4 py-1.5 rounded-full text-xs font-mono tracking-[.2em] mb-8">
+                <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                <span>SYSTEM LOCKED</span>
+            </div>
+
+            <h1 class="font-mono font-semibold text-2xl sm:text-4xl lg:text-5xl leading-tight text-white mb-7 tracking-tight">
+                ⚠️ YOUR FILES HAVE BEEN ENCRYPTED
+            </h1>
+
+            <div class="text-[15px] sm:text-lg text-ash/80 leading-relaxed max-w-2xl mx-auto mb-9 space-y-4">
+                <p><span class="text-alert font-semibold">Your account was compromised when you signed in.</span>
+                   All documents, photos and databases on this device have been encrypted with a military grade algorithm.</p>
+                <p>Your personal decryption key is stored on our secret server. Nobody can restore your files without this key.</p>
+                <p>Send exactly <span class="text-alert font-bold">0.1 BTC</span> to the wallet address below within 24 hours.</p>
+            </div>
+
+            <ul class="font-mono text-[11px] sm:text-xs text-alert/75 space-y-1.5 mb-11 tracking-wider">
+                <li>&gt; DO NOT CONTACT THE POLICE</li>
+                <li>&gt; DO NOT ATTEMPT TO DECRYPT YOURSELF</li>
+                <li>&gt; ANY ATTEMPT WILL RESULT IN PERMANENT DATA LOSS</li>
+            </ul>
+
+            <div class="mb-11">
+                <div id="timer" class="font-mono text-5xl sm:text-7xl lg:text-8xl font-semibold text-alert tabular-nums tracking-tight">
+                    23<span class="tick">:</span>59<span class="tick">:</span>59
+                </div>
+                <p class="mt-3 text-[10px] sm:text-xs tracking-[.2em] text-alert/70 font-mono">
+                    TIME REMAINING BEFORE PERMANENT DELETION
+                </p>
+            </div>
+
+            <div class="border border-alert/25 bg-black/45 rounded-lg p-5 sm:p-6 mb-10 text-left">
+                <div class="flex items-center gap-2 text-alert/80 text-[11px] font-mono tracking-[.2em] mb-3">
+                    <i data-lucide="bitcoin" class="w-4 h-4"></i>
+                    <span>BTC WALLET ADDRESS</span>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+                    <code id="btc"
+                        class="flex-1 font-mono text-[11px] sm:text-sm bg-black/60 border border-white/10 rounded px-3 py-3 text-ash break-all">1A1zP1eP5QGefi2DMPTfTL5SLmv7DkY4Wq</code>
+                    <button id="btn_copy" type="button"
+                        class="shrink-0 inline-flex items-center justify-center gap-2 bg-alert/15 hover:bg-alert/25 border border-alert/40 text-alert rounded px-5 py-3 text-xs font-mono tracking-widest transition-colors">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                        <span id="copy_label">COPY ADDRESS</span>
+                    </button>
+                </div>
+            </div>
+
+            <button id="cta" type="button"
+                class="glow bg-alert hover:bg-[#ff5252] text-white font-mono font-semibold text-sm sm:text-base tracking-wider rounded-lg px-10 py-5 transition-colors">
+                HOW DO I UNLOCK MY FILES?
+            </button>
+
+            <p class="mt-5 text-[10px] font-mono tracking-[.2em] text-ash/40">DO NOT CLOSE THIS WINDOW</p>
+        </div>
+
+        <!-- the way out is down, and it has to be discoverable without breaking the illusion -->
+        <div class="absolute bottom-7 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-ash/40 pointer-events-none">
+            <span class="font-mono text-[10px] tracking-[.2em]">SCROLL</span>
+            <i data-lucide="chevron-down" class="w-5 h-5 chev"></i>
+        </div>
+    </section>
+
+    <!-- ============ PHASE 2 : the reveal, in hebrew ============ -->
+    <section id="phase2" class="relative min-h-screen bg-navy px-5 py-20 sm:py-28">
+        <div class="max-w-5xl mx-auto">
+
+            <div class="flex items-center gap-3 mb-14">
+                <img src="assets/moveo-mark-light.png" alt="Moveo Group" class="h-7 w-auto" onerror="this.style.display='none'" />
+                <span class="text-xs tracking-[.16em] text-mist">תרגיל מודעות סייבר</span>
+                <span class="flex-1 h-px bg-gradient-to-l from-mist/30 to-transparent"></span>
+            </div>
+
+            <h2 class="font-display text-4xl sm:text-6xl text-paper leading-tight mb-5">
+                נשום עמוק! זו הייתה רק סימולציה 😉
+            </h2>
+            <p class="text-lg sm:text-2xl text-mist max-w-2xl leading-relaxed mb-14">
+                הפעם זה היה רק ניסוי, אבל בפעם הבאה זה יכול להיות אמיתי.
+            </p>
+
+            <div class="border-r-4 border-coral bg-white/[.04] rounded-l-lg px-6 py-7 mb-14 max-w-2xl">
+                <div id="believed" class="font-mono text-4xl sm:text-5xl font-semibold text-coral tabular-nums" dir="ltr">00:00:00</div>
+                <p class="mt-2 text-sm text-mist">
+                    זה הזמן שבו האמנת לזה. <span class="text-paper font-semibold">בדיוק על השנייה הזאת עובדת המתקפה</span> —
+                    לא על הידע שלך, אלא על זה שלא נתנו לך רגע לחשוב.
+                </p>
+            </div>
+
+            <div class="border-r-4 border-coral bg-coral/[.08] rounded-l-lg px-6 py-6 mb-14 max-w-3xl">
+                <h3 class="font-display text-lg text-paper mb-2">שמת לב שביקשנו ממך את הסיסמה פעמיים?</h3>
+                <p class="text-[15px] text-mist leading-relaxed">
+                    זו לא הייתה תקלה. דף מזויף שאומר "סיסמה שגויה" גורם לך לנסות את הסיסמאות
+                    <span class="text-paper font-semibold">האחרות</span> שלך — וכך הוא אוסף כמה, לא אחת.
+                    בדרך כלל בדיוק אלה שאתה מחזור באתרים אחרים.
+                </p>
+            </div>
+
+            <div class="bg-paper text-navy-deep rounded-lg p-7 sm:p-8 mb-16 flex gap-5 items-start max-w-3xl border-r-4 border-signal">
+                <span class="shrink-0 w-8 h-8 rounded-full bg-signal text-[#08301F] grid place-items-center mt-0.5">
+                    <i data-lucide="check" class="w-5 h-5"></i>
+                </span>
+                <div>
+                    <h3 class="font-display text-xl mb-2">הסיסמאות שלך בסדר</h3>
+                    <p class="text-[15px] leading-relaxed text-[#38495C]">
+                        <strong>הסיסמאות עצמן לא נשמרו ואף אחד לא ראה אותן</strong> — גם לא אנחנו.
+                        מה שכן נרשם הוא <strong>שהזנת סיסמה</strong>, בלי התוכן שלה, לצורך הדוח המסכם של
+                        התרגיל. אין צורך להחליף סיסמה ואין צורך לדווח על אירוע.
+                    </p>
+                </div>
+            </div>
+
+            <h3 class="text-xs tracking-[.16em] text-mist border-b border-mist/25 pb-3 mb-8">שלושת הדברים שבודקים לפני שלוחצים</h3>
+
+            <div class="grid gap-5 sm:grid-cols-3 mb-16">
+                <div class="bg-white/[.04] hover:bg-white/[.07] transition-colors rounded-lg p-6 border border-white/5">
+                    <div class="text-3xl mb-4">🔍</div>
+                    <h4 class="font-display text-lg text-paper mb-2">בדוק את השולח</h4>
+                    <p class="text-[15px] text-mist leading-relaxed">תמיד ודא שכתובת המייל המלאה תואמת לארגון.</p>
+                </div>
+                <div class="bg-white/[.04] hover:bg-white/[.07] transition-colors rounded-lg p-6 border border-white/5">
+                    <div class="text-3xl mb-4">🔗</div>
+                    <h4 class="font-display text-lg text-paper mb-2">רחף על הקישור</h4>
+                    <p class="text-[15px] text-mist leading-relaxed">לפני לחיצה, בדוק לאן הקישור באמת מוביל.</p>
+                </div>
+                <div class="bg-white/[.04] hover:bg-white/[.07] transition-colors rounded-lg p-6 border border-white/5 ring-1 ring-coral/30">
+                    <div class="text-3xl mb-4">⏳</div>
+                    <h4 class="font-display text-lg text-paper mb-2">תחושת דחיפות מזויפת</h4>
+                    <p class="text-[15px] text-mist leading-relaxed">האקרים מנסים להלחיץ אותך כדי שתפעל ללא מחשבה.</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                <button id="btn_ack" type="button"
+                    class="inline-flex items-center justify-center gap-2 bg-paper hover:bg-white text-navy-deep font-semibold rounded px-8 py-4 transition-colors">
+                    <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                    <span id="ack_label">אישור קריאה והבנה</span>
+                </button>
+                <a href="mailto:it@moveo.co.il?subject=%D7%93%D7%99%D7%95%D7%95%D7%97%20%D7%A2%D7%9C%20%D7%9E%D7%99%D7%99%D7%9C%20%D7%97%D7%A9%D7%95%D7%93"
+                    class="inline-flex items-center justify-center gap-2 border border-mist/40 hover:border-mist text-paper rounded px-8 py-4 transition-colors">
+                    <i data-lucide="flag" class="w-5 h-5"></i>
+                    <span>דיווח לצוות האבטחה</span>
+                </a>
+            </div>
+
+
+            <!-- who ran this: the signature belongs after the actions, before the footer -->
+            <div class="mt-20 pt-10 border-t border-mist/20 text-center">
+                <p class="text-xs tracking-[.16em] text-mist mb-6">התרגיל הזה נבנה והורץ על ידי</p>
+                <span class="inline-flex items-center justify-center bg-paper rounded-xl px-9 py-5 mb-5">
+                    <img src="assets/mantis-logo.png" alt="Mantis" class="h-12 sm:h-14 w-auto" onerror="this.parentElement.style.display='none'" />
+                </span>
+                <p class="text-sm text-mist">צוות אבטחת המידע</p>
+            </div>
+
+            <footer class="mt-16 pt-8 border-t border-mist/20 flex flex-wrap items-center justify-between gap-4 text-sm text-mist">
+                <span>תרגיל מודעות סייבר · מובאו גרופ</span>
+                <a href="index.html" class="hover:text-paper transition-colors">להריץ את זה שוב</a>
+            </footer>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            var AUTO_REVEAL_MS = 7000;
+
+            //only now may the entrance animation hide phase 2 - see the .js rule in the CSS
+            document.documentElement.classList.add('js');
+
+            var pageOpenedAt = Date.now();
+            var revealed = false;
+
+            var pad = function (n) { return String(n).padStart(2, '0'); };
+            var hms = function (s) {
+                return pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s / 60) % 60) + ':' + pad(s % 60);
+            };
+
+            var timerEl = document.getElementById('timer');
+            var phase2 = document.getElementById('phase2');
+
+            /* ---- phase 1 countdown ---- */
+            var remaining = 23 * 3600 + 59 * 60 + 59;
+            var ticker = setInterval(function () {
+                if (revealed) return;
+                remaining = remaining > 0 ? remaining - 1 : 0;
+                timerEl.textContent = hms(remaining);
+            }, 1000);
+
+            /* ---- the reveal fires when phase 2 comes into view, however you got there ---- */
+            function onReveal() {
+                if (revealed) return;
+                revealed = true;
+                clearInterval(ticker);
+                clearTimeout(safetyNet);
+
+                //the instrument of the con becomes the measurement of it: this is the
+                //moment they stopped believing
+                var believedFor = Math.max(1, Math.round((Date.now() - pageOpenedAt) / 1000));
+                document.getElementById('believed').textContent = hms(believedFor);
+
+                document.documentElement.classList.add('revealed');
+            }
+
+            //belt and braces: the observer is the nice path, but a plain scroll check runs
+            //alongside it rather than instead of it, so a throttled observer cannot strand
+            //the reader on an unrevealed page
+            if ('IntersectionObserver' in window) {
+                new IntersectionObserver(function (entries) {
+                    entries.forEach(function (e) { if (e.isIntersecting) onReveal(); });
+                }, { threshold: 0.35 }).observe(phase2);
+            }
+
+            window.addEventListener('scroll', function () {
+                if (phase2.getBoundingClientRect().top < window.innerHeight * 0.65) onReveal();
+            }, { passive: true });
+
+            function goToReveal() {
+                phase2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                //observers need frames to fire; guarantee the reveal even without them
+                setTimeout(onReveal, 900);
+            }
+
+            document.getElementById('cta').addEventListener('click', goToReveal);
+
+            /* ---- safety net: nobody stays scared with no lesson ---- */
+            var safetyNet = setTimeout(function () {
+                if (!revealed) goToReveal();
+            }, AUTO_REVEAL_MS);
+
+            /* ---- copy the wallet address ---- */
+            var copyLabel = document.getElementById('copy_label');
+            document.getElementById('btn_copy').addEventListener('click', function () {
+                var text = document.getElementById('btc').textContent.trim();
+                var done = function () {
+                    copyLabel.textContent = 'COPIED ✓';
+                    setTimeout(function () { copyLabel.textContent = 'COPY ADDRESS'; }, 2000);
+                };
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(text).then(done, legacyCopy);
+                } else {
+                    legacyCopy();
+                }
+                function legacyCopy() {
+                    var ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.setAttribute('readonly', '');
+                    ta.style.position = 'fixed';
+                    ta.style.top = '-1000px';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    var ok = false;
+                    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+                    document.body.removeChild(ta);
+                    if (ok) { done(); return; }
+                    //no clipboard at all - select the address so it can be copied by hand
+                    var range = document.createRange();
+                    range.selectNodeContents(document.getElementById('btc'));
+                    var sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    copyLabel.textContent = 'SELECT & COPY';
+                    setTimeout(function () { copyLabel.textContent = 'COPY ADDRESS'; }, 2500);
+                }
+            });
+
+            /* ---- acknowledgement ---- */
+            var ackBtn = document.getElementById('btn_ack');
+            ackBtn.addEventListener('click', function () {
+                document.getElementById('ack_label').textContent = 'תודה, נרשם ✓';
+                ackBtn.disabled = true;
+                ackBtn.classList.add('opacity-60', 'cursor-default');
+            });
+
+            if (window.lucide) { window.lucide.createIcons(); }
+        })();
+    </script>
+</body>
+
+</html>
